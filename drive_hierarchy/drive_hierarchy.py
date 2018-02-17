@@ -51,13 +51,14 @@ def get_credentials():
     return auth
 
 
-def get_folder_contents(service, hierarchy, parent):
+def process_hierarchy(service, hierarchy, parent):
     '''
-    Retrieve a folder's contents.
+    Retrieve a hierarchy's contents.
+    @see Use recursively.
 
     @param service      API interaction resource to use.
-    @param hierarchy    File structure dictionary at current position.
-    @param parent       Folder to use.
+    @param hierarchy    Hierarchy dictionary at current position.
+    @param parent       Current folder to fetch.
     @noreturn
     '''
     query = service.files().list(q=f"parents in '{parent}'",
@@ -77,7 +78,7 @@ def get_folder_contents(service, hierarchy, parent):
                 "files": [],
                 "children": []
             })
-            get_folder_contents(service, hierarchy["children"][-1], key["id"])
+            process_hierarchy(service, hierarchy["children"][-1], key["id"])
         else:
             # Use the setdefault() method to append files.
             hierarchy.setdefault("files", []).append({
@@ -104,7 +105,7 @@ def main():
         "files": [],
         "children": []
     }
-    get_folder_contents(service, hierarchy, DRIVE_FOLDERID)
+    process_hierarchy(service, hierarchy, DRIVE_FOLDERID)
 
     # Output in JSON format.
     with open(OUTPUT_FILE, "w") as file:
