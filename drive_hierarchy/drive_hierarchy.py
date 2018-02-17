@@ -10,6 +10,7 @@ import json
 import httplib2
 
 # Powered by google-api-python-client.
+from natsort import natsorted
 from apiclient import discovery
 from oauth2client import tools
 from oauth2client import client
@@ -87,6 +88,29 @@ def process_hierarchy(service, hierarchy, parent):
             })
 
 
+def sort_hierarchy(hierarchy):
+    '''
+    Sort a folder's contents.
+    @see Use recursively.
+
+    @param hierarchy    Hierarchy dictionary at current position.
+    @noreturn
+    '''
+    if hierarchy["files"]:
+        # Sort files by display name.
+        hierarchy["files"] = natsorted(hierarchy["files"],
+                                       key=lambda k: k["name"])
+
+    if hierarchy["children"]:
+        # Sort subfolders by display name too.
+        hierarchy["children"] = natsorted(hierarchy["children"],
+                                          key=lambda k: k["name"])
+
+        # Sort the hierarchy recursively.
+        for child in hierarchy["children"]:
+            sort_hierarchy(child)
+
+
 def main():
     '''
     Authenticate with Google Drive through oAuth, construct a file hierarchy
@@ -106,6 +130,7 @@ def main():
         "children": []
     }
     process_hierarchy(service, hierarchy, DRIVE_FOLDERID)
+    sort_hierarchy(hierarchy)
 
     # Output in JSON format.
     with open(OUTPUT_FILE, "w") as file:
